@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: Chipster session replay job
+  annotations:
+    description: "Program for testing Chipster installation by replaying the jobs in the session files"
+    tags: "nodejs,typescript,chipster"
+objects:
+- apiVersion: batch/v1
+  kind: Job
+  metadata:
+    name: ${{NAME}}
+  spec:
+    parallelism: 1    
+    completions: 1    
+    template:         
+      metadata:
+        name: ${{NAME}}
+      spec:
+        containers:
+        - name: ${{NAME}}
+          image: docker-registry.default.svc:5000/${PROJECT}/session-replay
+          command: ["node", "src/replay-session", "-u", "${USERNAME}", "-p", "${PASSWORD}", "-P", "${PARALLEL}", "-r", "${RESULTS}", "${SERVER}", "${PATH}"]
+          volumeMounts:        
+          - mountPath: /home/user/test-data
+            name: test-data
+        volumes:
+        - name: test-data
+          persistentVolumeClaim:
+            claimName: test-data
+        restartPolicy: OnFailure
+parameters:
+- description: job name
+  name: NAME
+- description: OpenShift project
+  name: PROJECT
+- description: Chipster username 
+  name: USERNAME
+- description: Chipster password
+  name: PASSWORD
+- description: How many jobs are allowed to run in parallel
+  name: PARALLEL
+- description: Test result directory
+  name: RESULTS
+- description: URL of the Chipster server
+  name: SERVER
+- description: Path of the test sesssion file or directory
+  name: PATH
+labels:
+  redis: master

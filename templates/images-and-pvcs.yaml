@@ -1,0 +1,195 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: Chipster session replay infrasctructure
+  annotations:
+    description: "Program for testing Chipster installation by replaying the jobs in the session files"
+    tags: "nodejs,typescript,chipster"
+objects:
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: ubuntu
+  spec:
+    lookupPolicy:
+      local: false
+    tags:
+      - annotations:
+          openshift.io/imported-from: 'ubuntu:16.04'
+        from:
+          kind: DockerImage
+          name: 'ubuntu:16.04'
+        generation: 2
+        importPolicy: {}
+        name: '16.04'
+        referencePolicy:
+          type: Source
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: base
+  spec:
+    lookupPolicy:
+      local: false
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: session-replay
+  spec:
+    lookupPolicy:
+      local: false
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: apache
+  spec:
+    lookupPolicy:
+      local: false
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: session-replay
+  spec:
+    lookupPolicy:
+      local: false
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:    
+    name: base
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: 'base:latest'
+    source:
+      dockerfile: ${{DOCKERFILE_BASE}}
+      type: Dockerfile
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: 'ubuntu:16.04'
+      type: Docker
+    triggers:
+      - type: ConfigChange
+      - imageChange:
+        type: ImageChange
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:    
+    name: apache
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: 'apache:latest'
+    source:
+      dockerfile: ${{DOCKERFILE_APACHE}}
+      type: Dockerfile
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: 'ubuntu:16.04'
+      type: Docker
+    triggers:
+      - type: ConfigChange
+      - imageChange:
+        type: ImageChange
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    name: session-replay
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: 'session-replay:latest'
+    source:
+      dockerfile: ${{DOCKERFILE_SESSION_REPLAY}}
+      git:
+        uri: 'https://github.com/chipster/chipster-web-server.git'
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: 'base:latest'
+      type: Docker
+- apiVersion: v1
+  kind: PersistentVolumeClaim
+  metadata:
+    name: test-data
+  spec:
+    accessModes:
+      - ReadWriteMany
+    resources:
+      requests:
+        storage: 40Gi
+- apiVersion: apps.openshift.io/v1
+  kind: DeploymentConfig
+  metadata:
+    name: apache
+  spec:
+    selector:
+      app: apache
+    replicas: 1
+    template:
+      metadata:
+        labels:
+          app: apache
+      spec:
+        containers:
+          - image: 'docker-registry.default.svc:5000/${PROJECT}/apache'
+            name: apache
+            ports:
+              - containerPort: 8000
+                name: web
+                protocol: TCP
+            volumeMounts:
+              - mountPath: /var/www/html
+                name: test-data
+        volumes:
+          - name: test-data
+            persistentVolumeClaim:
+              claimName: test-data
+    triggers:
+      - type: ConfigChange
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: apache
+  spec:
+    ports:
+      - port: 80
+        protocol: TCP
+        targetPort: web
+    selector:
+      app: apache
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: apache
+  spec:
+    host: apache-${PROJECT}.${APP_DOMAIN}
+    tls:
+      insecureEdgeTerminationPolicy: Redirect
+      termination: edge
+    to:
+      kind: Service
+      name: apache
+      weight: 100
+    wildcardPolicy: None
+parameters:
+- description: Dockerfile for the base build
+  name: DOCKERFILE_BASE
+- description: Dockerfile for the session-replay build
+  name: DOCKERFILE_SESSION_REPLAY
+- description: Dockerfile for the apache build
+  name: DOCKERFILE_APACHE
+- description: OpenShift namespace
+  name: PROJECT
+- description: OpenShift app domain
+  name: APP_DOMAIN
+labels:
+  redis: master
