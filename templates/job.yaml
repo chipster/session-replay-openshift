@@ -20,7 +20,7 @@ objects:
         containers:
         - name: ${{NAME}}
           image: docker-registry.default.svc:5000/${PROJECT}/session-replay
-          command: ["node", "src/replay-session", "-u", "${USERNAME}", "-p", "${PASSWORD}", "-P", "${PARALLEL}", "-r", "${RESULTS}", "${SERVER}", "${PATH}"]
+          command: ["node", "src/replay-session", "-u", "${USERNAME}", "-p", "${PASSWORD}", "-P", "${PARALLEL}", "-r", "${RESULTS}", "${SERVER}", "-F", "${TEST_SET}/"]
           volumeMounts:        
           - mountPath: /home/user/test-data
             name: test-data
@@ -44,7 +44,7 @@ parameters:
   name: RESULTS
 - description: URL of the Chipster server
   name: SERVER
-- description: Path of the test sesssion file or directory
-  name: PATH
+- description: Prefix of the server sessions to replay
+  name: TEST_SET
 labels:
   redis: master

@@ -19,11 +19,11 @@ fi
 oc process -f templates/job.yaml \
     -p NAME="$job_name" \
     -p PROJECT="$(oc project -q)" \
-    -p USERNAME="demo" \
+    -p USERNAME="replay_test" \
     -p PASSWORD="$password" \
     -p PARALLEL="$parallel" \
     -p SERVER="http://chipster.rahti-int-app.csc.fi" \
-    -p PATH="/home/user/test-data/test-sessions/$test_set" \
+    -p TEST_SET="$test_set" \
     -p RESULTS="/home/user/test-data/results/$test_set" \
     | oc apply -f -
 

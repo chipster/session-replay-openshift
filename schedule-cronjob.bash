@@ -3,28 +3,31 @@
 set -e
 
 if [ -z "$4" ]; then
-  echo "Usage: schedule-cronjob.bash PASSWORD PARALLEL_JOBS TEST_SET SCHEDULE"
+  echo "Usage: schedule-cronjob.bash SERVER PASSWORD TEST_SET SCHEDULE"
   exit 1
 fi
 
-password="$1"
-parallel="$2"
+server="$1"
+password="$2"
 test_set="$3"
 schedule="$4"
-job_name="session-replay-cronjob-$test_set"
 
-if oc get job $job_name -o name > /dev/null 2>&1; then
-  oc delete job $job_name
+server_name="$(echo "$server" | sed s*https://** | sed s/\\./-/g)"
+
+job_name="cronjob-$test_set-$server_name"
+
+if oc get cronjob $job_name -o name > /dev/null 2>&1; then
+  oc delete cronjob $job_name
 fi
 
 oc process -f templates/cronjob.yaml \
     -p SCHEDULE="$schedule" \
     -p NAME="$job_name" \
     -p PROJECT="$(oc project -q)" \
-    -p USERNAME="demo" \
+    -p USERNAME="replay_test" \
     -p PASSWORD="$password" \
-    -p PARALLEL="$parallel" \
-    -p SERVER="http://chipster.rahti-int-app.csc.fi" \
-    -p PATH="/home/user/test-data/test-sessions/$test_set" \
-    -p RESULTS="/home/user/test-data/results/$test_set" \
+    -p PARALLEL="1" \
+    -p SERVER="$server" \
+    -p TEST_SET="$test_set" \
+    -p RESULTS="/home/user/test-data/results/$test_set-$server_name" \
     | oc apply -f -

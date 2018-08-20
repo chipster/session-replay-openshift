@@ -18,6 +18,8 @@ oc start-build apache --follow
 
 bash run-test-set.bash $PASSWORD 1 availability
 bash schedule-cronjob.bash $PASSWORD 1 availability '* * * * *'
+bash schedule-cronjob.bash $PASSWORD 1 tools-hourly2 '12 * * * *'
+bash schedule-cronjob.bash $PASSWORD 1 tools-daily2 '32 6 * * *'
 
 # if you want to copy a local session
 cat ~/Downloads/replay-test/io-test | oc rsh dc/base bash -c "cat - > test-sessions/io-test"
@@ -27,17 +29,7 @@ oc rsh dc/apache bash -c "cd /var/www/html/test-sessions; bash"
 wget -r -np --cut-dirs=2 -nH -R index.html http://vm0151.kaj.pouta.csc.fi/artefacts/test-sessions/
 rm */index.html*
 
-# if example sessions are in the old unsupported format, they can be updated using the old CLI client:
-
-wget https://chipster.csc.fi/chipster-cli.bash
-
-for f in tools-hourly/*; do
-  dir=$(dirname $f)
-  file=$(basename $f)
-  mkdir -p ${dir}2
-  bash chipster-cli.bash -u demo -p $PASSWORD clear-session
-  echo "open $dir/$file"
-  bash chipster-cli.bash -u demo -p $PASSWORD open-session $dir/$file
-  echo "save ${dir}2/$file"
-  bash chipster-cli.bash -u demo -p $PASSWORD save-session ${dir}2/$file
-done
+# in case you want to delete all sessions of a user:
+# first, check that your are logged in as a correct user
+# node src/chipster session list
+# node src/chipster -q session list | awk '{print $2}' | parallel -P 10 node src/chipster session delete
