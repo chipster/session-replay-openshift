@@ -17,7 +17,7 @@ oc start-build apache --follow
 
 
 bash run-test-set.bash $PASSWORD 1 availability
-bash schedule-cronjob.bash $PASSWORD 1 availability '* * * * *'
+bash schedule-cronjob.bash $PASSWORD 1 availability '*/5 * * * *'
 bash schedule-cronjob.bash $PASSWORD 1 tools-hourly2 '12 * * * *'
 bash schedule-cronjob.bash $PASSWORD 1 tools-daily2 '32 6 * * *'
 
