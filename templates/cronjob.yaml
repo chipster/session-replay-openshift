@@ -21,7 +21,7 @@ objects:
             containers:
             - name: ${{NAME}}
               image: docker-registry.default.svc:5000/${PROJECT}/${IMAGE}
-              command: ["node", "src/replay-session", "-u", "${USERNAME}", "-p", "${PASSWORD}", "-P", "${PARALLEL}", "-r", "${RESULTS}", "${SERVER}", "-F", "${TEST_SET}/"]
+              command: ["node", "lib/replay-session", "-u", "${USERNAME}", "-p", "${PASSWORD}", "-P", "${PARALLEL}", "-r", "${RESULTS}", "${SERVER}", "-F", "${TEST_SET}/"]
               volumeMounts:        
               - mountPath: /home/user/test-data
                 name: test-data

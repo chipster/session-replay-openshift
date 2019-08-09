@@ -9,4 +9,4 @@ RUN cd /home/user/chipster-web-server/js/cli-client \
 
 WORKDIR /home/user/chipster-web-server/js/cli-client
 
-CMD node src/replay-session -h
+CMD node lib/replay-session -h
