@@ -1,9 +1,20 @@
 #oc process -f templates/session-replay.yaml | oc apply -f -
 
-PASSWORD=""
+PASSWORD="$(cat ../chipster-private/confs/chipster-all/users | grep benchmark | cut -d ":" -f 2)"
 APP_DOMAIN="rahti-int-app.csc.fi"
 
 oc process -f templates/images-and-pvcs.yaml \
+  -p DOCKERFILE_BASE="$(cat dockerfiles/base/Dockerfile | jq -s -R .)" \
+  -p DOCKERFILE_SESSION_REPLAY="$(cat dockerfiles/session-replay/Dockerfile | jq -s -R .)" \
+  -p DOCKERFILE_APACHE="$(cat dockerfiles/apache/Dockerfile | jq -s -R .)" \
+  -p PROJECT="$(oc project -q)" \
+  -p APP_DOMAIN="$APP_DOMAIN" \
+  | oc apply -f -
+  
+PASSWORD="$(cat ../chipster-private/confs/chipster-all/users | grep benchmark | cut -d ":" -f 2)"
+APP_DOMAIN="rahti-int-app.csc.fi"
+
+oc process -f templates/images-master.yaml \
   -p DOCKERFILE_BASE="$(cat dockerfiles/base/Dockerfile | jq -s -R .)" \
   -p DOCKERFILE_SESSION_REPLAY="$(cat dockerfiles/session-replay/Dockerfile | jq -s -R .)" \
   -p DOCKERFILE_APACHE="$(cat dockerfiles/apache/Dockerfile | jq -s -R .)" \
@@ -15,11 +26,10 @@ oc start-build base --follow
 oc start-build session-replay --follow
 oc start-build apache --follow
 
-
 bash run-test-set.bash $PASSWORD 1 availability
-bash schedule-cronjob.bash $PASSWORD 1 availability '*/5 * * * *'
-bash schedule-cronjob.bash $PASSWORD 1 tools-hourly2 '12 * * * *'
-bash schedule-cronjob.bash $PASSWORD 1 tools-daily2 '32 6 * * *'
+bash schedule-cronjob.bash https://chipster.rahtiapp.fi $PASSWORD availability '*/5 * * * *' session-replay
+bash schedule-cronjob.bash https://chipster.rahtiapp.fi $PASSWORD tools-hourly2 '12 * * * *' session-replay
+bash schedule-cronjob.bash https://chipster.rahtiapp.fi $PASSWORD tools-daily2 '32 6 * * *' session-replay
 
 # if you want to copy a local session
 cat ~/Downloads/replay-test/io-test | oc rsh dc/base bash -c "cat - > test-sessions/io-test"

@@ -20,7 +20,7 @@ objects:
           spec:
             containers:
             - name: ${{NAME}}
-              image: docker-registry.default.svc:5000/${PROJECT}/session-replay
+              image: docker-registry.default.svc:5000/${PROJECT}/${IMAGE}
               command: ["node", "src/replay-session", "-u", "${USERNAME}", "-p", "${PASSWORD}", "-P", "${PARALLEL}", "-r", "${RESULTS}", "${SERVER}", "-F", "${TEST_SET}/"]
               volumeMounts:        
               - mountPath: /home/user/test-data
@@ -49,5 +49,5 @@ parameters:
   name: SERVER
 - description: Prefix of the server sessions to replay
   name: TEST_SET
-labels:
-  redis: master
+- description: image to run
+  name: IMAGE

@@ -3,7 +3,7 @@ FROM ubuntu:16.04
 RUN apt-get update -y \ 
 	&& apt-get upgrade -y \
 	&& apt-get install -y nano dstat pv wget curl jq \
-	&& curl -sL https://deb.nodesource.com/setup_8.x | bash - \
+	&& curl -sL https://deb.nodesource.com/setup_12.x | bash - \
 	&& apt-get install -y nodejs \
 	&& apt-get clean
 
@@ -22,7 +22,7 @@ RUN mkdir ~/.npm-global \
 	&& npm config set prefix '~/.npm-global'	
 ENV PATH="/home/user/.npm-global/bin:${PATH}"
  
-RUN npm install -g typescript@2.6.2 \
+RUN npm install -g typescript@latest \
 #    && npm install npm@6.1.0 -g \
 	&& npm cache clean --force
 	

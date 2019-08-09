@@ -11,6 +11,7 @@ server="$1"
 password="$2"
 test_set="$3"
 schedule="$4"
+image="$5"
 
 server_name="$(echo "$server" | sed s*https://** | sed s/\\./-/g)"
 
@@ -30,4 +31,5 @@ oc process -f templates/cronjob.yaml \
     -p SERVER="$server" \
     -p TEST_SET="$test_set" \
     -p RESULTS="/home/user/test-data/results/$test_set-$server_name" \
+    -p IMAGE="$image" \
     | oc apply -f -

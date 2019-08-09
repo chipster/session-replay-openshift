@@ -15,7 +15,7 @@ chipster="chipster-web-server/js/cli-client/src/chipster"
 node="node-v8.11.3-linux-x64/bin/node"
 
 echo "Current sessions in this test set on the server:"
-node $chipster -q session list | grep ^$test_set/
+node $chipster -q session list | grep ^$test_set/ || true
 
 echo "Going to delete the above sessions after 10 seconds (Press Ctrl + C to interrupt)..."
 

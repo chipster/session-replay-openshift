@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: Chipster session replay infrasctructure
+  annotations:
+    description: "Program for testing Chipster installation by replaying the jobs in the session files"
+    tags: "nodejs,typescript,chipster"
+objects:
+- apiVersion: image.openshift.io/v1
+  kind: ImageStream
+  metadata:
+    name: session-replay-master
+  spec:
+    lookupPolicy:
+      local: false
+- apiVersion: build.openshift.io/v1
+  kind: BuildConfig
+  metadata:
+    name: session-replay-master
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: 'session-replay-master:latest'
+    source:
+      dockerfile: ${{DOCKERFILE_SESSION_REPLAY}}
+      git:
+        uri: 'https://github.com/chipster/chipster-web-server.git'
+      type: Git
+    strategy:
+      dockerStrategy:
+        from:
+          kind: ImageStreamTag
+          name: 'base:latest'
+      type: Docker
+parameters:
+- description: Dockerfile for the base build
+  name: DOCKERFILE_BASE
+- description: Dockerfile for the session-replay build
+  name: DOCKERFILE_SESSION_REPLAY
+- description: Dockerfile for the apache build
+  name: DOCKERFILE_APACHE
+- description: OpenShift namespace
+  name: PROJECT
+- description: OpenShift app domain
+  name: APP_DOMAIN
+labels:
+  redis: master
